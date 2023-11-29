@@ -1,5 +1,6 @@
 import pygame
-from math import sin, cos
+from math import sin, cos, pi
+from random import randrange, random
 
 WIDTH = 800
 HEIGHT = 600
@@ -12,9 +13,17 @@ BLACK = (0, 0, 0)
 FPS = 48
 VELOCITY = 100.0
 ANGULAR_SPEED = 10.0
-TOL = 1.0
 MIN_PLAYERS = 1
 MAX_PLAYERS = 3
+
+class Player:
+    def __init__(self, name, color, keys):
+        self.name = name
+        self.position = (randrange(0, WIDTH), randrange(0, HEIGHT))
+        self.angle = random() * 2 * pi
+        self.color = color
+        self.keys = keys
+        self.alive = True
 
 pygame.init()
 
@@ -24,9 +33,6 @@ clock = pygame.time.Clock()
 
 is_running = True
 
-position = (10.0, 100.0)
-angle = 0.1
-
 visited = []
 
 def distance2(p1, p2):
@@ -34,13 +40,13 @@ def distance2(p1, p2):
     (x2, y2) = p2
     return (x2-x1)**2 + (y2-y1)**2
 
-def check_collision(position, visited, width, height):
+def check_collision(position, visited, width, height, dt):
     (x, y) = position
     if x < 0 or y < 0 or x > width or y > height:
         return True
 
     for point in visited:
-        if distance2(position, point) < TOL:
+        if distance2(position, point) < (VELOCITY * dt)**2 + 1e-6:
             return True
 
     return False
@@ -87,7 +93,24 @@ def get_players(screen, clock):
         pygame.display.update()
         clock.tick(FPS)
 
-players = get_players(screen, clock)
+players_name = get_players(screen, clock)
+
+colors = [RED, GREEN, BLUE]
+keys = [
+    (pygame.K_m, pygame.K_k),
+    (pygame.K_v, pygame.K_b),
+    (pygame.K_a, pygame.K_z)
+]
+players = [Player(name, colors[i], keys[i]) for i, name in enumerate(players_name)]
+
+def check_winner(players):
+    if len(players) <= 1:
+        return None
+    alives = [player.alive for player in players].count(True)
+    if alives == 1:
+        index = [player.alive for player in players].index(True)
+        return players[index].name
+    return None
 
 screen.fill(BLACK)
 
@@ -100,24 +123,36 @@ while is_running:
             is_running = False
 
     keys=pygame.key.get_pressed()
-    if keys[pygame.K_m]:
-        angle += ANGULAR_SPEED * dt
-    if keys[pygame.K_k]:
-        angle -= ANGULAR_SPEED * dt
+    for player in players:
 
-    (x, y) = position
-    (vx, vy) = (VELOCITY * cos(angle), VELOCITY * sin(angle))
+        if player.alive:
+            (key_1, key_2) = player.keys
+            if keys[key_1]:
+                player.angle += ANGULAR_SPEED * dt
+            if keys[key_2]:
+                player.angle -= ANGULAR_SPEED * dt
 
-    if check_collision((x+vx*dt, y+vy*dt), visited, WIDTH, HEIGHT):
-        new_position = position
-        print("Game Over")
-    else:
-        new_position = (x+vx*dt, y+vy*dt)
+            (x, y) = player.position
+            (vx, vy) = (VELOCITY * cos(player.angle), VELOCITY * sin(player.angle))
 
-    pygame.draw.line(screen, GREEN, position, new_position, width=3)
+            if check_collision((x+vx*dt, y+vy*dt), visited, WIDTH, HEIGHT, dt):
+                player.alive = False
+                continue
+            else:
+                new_position = (x+vx*dt, y+vy*dt)
+
+            pygame.draw.line(screen, player.color, player.position, new_position, width=3)
+
+            visited.append(player.position)
+            player.position = new_position
+
+
+    # Check for winner
+    winner = check_winner(players)
+    if winner:
+        font = pygame.font.SysFont('Comic Sans MS', 40)
+        screen.blit(font.render('player '+winner+ ' won!', False, RED), (WIDTH//2,HEIGHT//2))
+
 
     pygame.display.update()
-
-    position = new_position
-    visited.append(position)
 
