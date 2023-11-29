@@ -7,11 +7,14 @@ HEIGHT = 600
 RED   = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE  = (0, 0, 255)
+BLACK = (0, 0, 0)
 
 FPS = 48
 VELOCITY = 100.0
 ANGULAR_SPEED = 10.0
 TOL = 1.0
+MIN_PLAYERS = 1
+MAX_PLAYERS = 3
 
 pygame.init()
 
@@ -41,6 +44,52 @@ def check_collision(position, visited, width, height):
             return True
 
     return False
+
+def get_players(screen, clock):
+    players = []
+    num_players = MIN_PLAYERS
+    num_players_selected = False
+
+    font = pygame.font.SysFont('Comic Sans MS', 40)
+    name = ''
+
+    while True:
+        for event in pygame.event.get():
+            if not num_players_selected:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_DOWN and num_players > MIN_PLAYERS:
+                        num_players -= 1
+                    if event.key == pygame.K_UP and num_players < MAX_PLAYERS:
+                        num_players += 1
+                    if event.key == pygame.K_RETURN:
+                        num_players_selected = True
+            else:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        players.append(name)
+                        name = ''
+                        if len(players) == num_players:
+                            return players
+                    elif event.key in [pygame.K_DELETE, pygame.K_BACKSPACE]:
+                        name = name[:len(name)-1]
+                    else:
+                        name += event.unicode
+
+        screen.fill(BLACK)
+        screen.blit(font.render('Select number of players: '+str(num_players), False, RED), (100,100))
+
+        if num_players_selected:
+            for i, player in enumerate(players):
+                screen.blit(font.render('Player '+str(i+1)+': '+player, False, RED), (100,150+i*50))
+            screen.blit(font.render('Player '+str(len(players)+1)+': '+name, False, RED), (100,150+len(players)*50))
+
+
+        pygame.display.update()
+        clock.tick(FPS)
+
+players = get_players(screen, clock)
+
+screen.fill(BLACK)
 
 while is_running:
 
