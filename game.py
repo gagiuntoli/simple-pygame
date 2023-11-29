@@ -8,9 +8,10 @@ RED   = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE  = (0, 0, 255)
 
-FPS = 24
+FPS = 48
 VELOCITY = 100.0
 ANGULAR_SPEED = 10.0
+TOL = 1.0
 
 pygame.init()
 
@@ -22,6 +23,24 @@ is_running = True
 
 position = (10.0, 100.0)
 angle = 0.1
+
+visited = []
+
+def distance2(p1, p2):
+    (x1, y1) = p1
+    (x2, y2) = p2
+    return (x2-x1)**2 + (y2-y1)**2
+
+def check_collision(position, visited, width, height):
+    (x, y) = position
+    if x < 0 or y < 0 or x > width or y > height:
+        return True
+
+    for point in visited:
+        if distance2(position, point) < TOL:
+            return True
+
+    return False
 
 while is_running:
 
@@ -39,11 +58,17 @@ while is_running:
 
     (x, y) = position
     (vx, vy) = (VELOCITY * cos(angle), VELOCITY * sin(angle))
-    new_position = (x+vx*dt, y+vy*dt)
+
+    if check_collision((x+vx*dt, y+vy*dt), visited, WIDTH, HEIGHT):
+        new_position = position
+        print("Game Over")
+    else:
+        new_position = (x+vx*dt, y+vy*dt)
 
     pygame.draw.line(screen, GREEN, position, new_position, width=3)
 
     pygame.display.update()
 
     position = new_position
+    visited.append(position)
 
