@@ -82,3 +82,12 @@ def test_insert_point():
     assert quad_tree.leaves[2].points == [p1]
     assert quad_tree.leaves[3].points == [p1]
 
+def test_check_collision():
+    dist = 0.0
+    quad_tree = QuadTree([0,1,0,1], 0.9, dist)
+    assert quad_tree.height() == 1
+
+    p1 = (0.25, 0.25)
+    quad_tree.insert_point(p1)
+    assert quad_tree.check_collision((0.26, 0.26), 0.1)
+    assert not quad_tree.check_collision((0.56, 0.56), 0.1)

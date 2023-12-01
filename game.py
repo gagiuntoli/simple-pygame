@@ -1,6 +1,8 @@
 import pygame
 from math import sin, cos, pi
 from random import randrange, random
+from geometry import distance2
+from quad_tree import QuadTree
 
 WIDTH = 800
 HEIGHT = 600
@@ -35,11 +37,6 @@ is_running = True
 
 visited = []
 
-def distance2(p1, p2):
-    (x1, y1) = p1
-    (x2, y2) = p2
-    return (x2-x1)**2 + (y2-y1)**2
-
 def check_collision(position, visited, width, height, dt):
     (x, y) = position
     if x < 0 or y < 0 or x > width or y > height:
@@ -50,6 +47,13 @@ def check_collision(position, visited, width, height, dt):
             return True
 
     return False
+
+def check_collision_efficient(quad_tree, position, width, height, dt):
+    (x, y) = position
+    if x < 0 or y < 0 or x > width or y > height:
+        return True
+
+    return quad_tree.check_collision(position, VELOCITY * dt + 1e-6)
 
 def get_players(screen, clock):
     players = []
@@ -114,6 +118,10 @@ def check_winner(players):
 
 screen.fill(BLACK)
 
+dt = clock.tick(FPS)/1000.0
+quad_tree = QuadTree([0, WIDTH, 0, HEIGHT], VELOCITY * dt * 20, VELOCITY * dt + 1e-6)
+print("tree height:", quad_tree.height())
+
 while is_running:
 
     dt = clock.tick(FPS)/1000.0
@@ -135,7 +143,8 @@ while is_running:
             (x, y) = player.position
             (vx, vy) = (VELOCITY * cos(player.angle), VELOCITY * sin(player.angle))
 
-            if check_collision((x+vx*dt, y+vy*dt), visited, WIDTH, HEIGHT, dt):
+            #if check_collision((x+vx*dt, y+vy*dt), visited, WIDTH, HEIGHT, dt):
+            if check_collision_efficient(quad_tree, (x+vx*dt, y+vy*dt), WIDTH, HEIGHT, dt):
                 player.alive = False
                 continue
             else:
@@ -143,7 +152,8 @@ while is_running:
 
             pygame.draw.line(screen, player.color, player.position, new_position, width=3)
 
-            visited.append(player.position)
+            #visited.append(player.position)
+            quad_tree.insert_point(player.position)
             player.position = new_position
 
 
