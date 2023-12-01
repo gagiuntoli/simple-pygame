@@ -1,6 +1,4 @@
-
-from geometry import distance2
-
+from geometry import distance
 
 class QuadTree:
     def __init__(self, rectangle: list[float], leaf_size: float, extended_distance: float):
@@ -49,19 +47,19 @@ class QuadTree:
         width /= 2
         height /= 2
 
-        if self.is_inside_rectangle([xmin, xmin+width+dd, ymin, ymin+height+dd], point):
+        if self.is_inside_rectangle([xmin-dd, xmin+width+dd, ymin-dd, ymin+height+dd], point):
             self.leaves[0].insert_point(point)
-        if self.is_inside_rectangle([xmin+width-dd, xmax, ymin, ymin+height+dd], point):
+        if self.is_inside_rectangle([xmin+width-dd, xmax+dd, ymin-dd, ymin+height+dd], point):
             self.leaves[1].insert_point(point)
-        if self.is_inside_rectangle([xmin, xmin+width+dd, ymin+height-dd, ymax], point):
+        if self.is_inside_rectangle([xmin-dd, xmin+width+dd, ymin+height-dd, ymax+dd], point):
             self.leaves[2].insert_point(point)
-        if self.is_inside_rectangle([xmin+width-dd, xmax, ymin+height-dd, ymax], point):
+        if self.is_inside_rectangle([xmin+width-dd, xmax+dd, ymin+height-dd, ymax+dd], point):
             self.leaves[3].insert_point(point)
 
-    def check_collision(self, point, distance):
+    def check_collision(self, point, dist):
         if self.leaves == []:
             for p in self.points:
-                if distance2(p, point) < distance**2:
+                if distance(p, point) < dist:
                     return True 
             return False
 
@@ -72,12 +70,12 @@ class QuadTree:
         height /= 2
 
         if self.is_inside_rectangle([xmin, xmin+width, ymin, ymin+height], point):
-            return self.leaves[0].check_collision(point, distance)
+            return self.leaves[0].check_collision(point, dist)
         if self.is_inside_rectangle([xmin+width, xmax, ymin, ymin+height], point):
-            return self.leaves[1].check_collision(point, distance)
+            return self.leaves[1].check_collision(point, dist)
         if self.is_inside_rectangle([xmin, xmin+width, ymin+height, ymax], point):
-            return self.leaves[2].check_collision(point, distance)
+            return self.leaves[2].check_collision(point, dist)
         if self.is_inside_rectangle([xmin+width, xmax, ymin+height, ymax], point):
-            return self.leaves[3].check_collision(point, distance)
+            return self.leaves[3].check_collision(point, dist)
 
 
